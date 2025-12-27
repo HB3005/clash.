@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Clash Royale | Descubra se seu deck combina com sua arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Reset e configurações gerais */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-dark: #0a0e29;
+            --secondary-dark: #151a3f;
+            --arena-blue: #1a5fb4;
+            --royal-purple: #9141ac;
+            --gold: #ffd700;
+            --light-gold: #fff5cc;
+            --arena-green: #26a269;
+            --arena-red: #c01c28;
+            --arena-sand: #cdab8f;
+            --text-light: #f0f2ff;
+            --text-gray: #b8bdf0;
+            --glow-blue: rgba(26, 95, 180, 0.6);
+            --glow-purple: rgba(145, 65, 172, 0.6);
+            --glow-gold: rgba(255, 215, 0, 0.6);
+        }
+
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background-color: var(--primary-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(26, 95, 180, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(145, 65, 172, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 40% 80%, rgba(255, 215, 0, 0.05) 0%, transparent 40%),
+                linear-gradient(to bottom, rgba(10, 14, 41, 0.9), rgba(10, 14, 41, 0.9)),
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none" stroke="%23151a3f" stroke-width="1"/><path d="M0,0 L100,100" stroke="%23151a3f" stroke-width="0.5"/><path d="M0,100 L100,0" stroke="%23151a3f" stroke-width="0.5"/></svg>');
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        .arena-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Elementos da arena */
+        .arena-border {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .arena-border::before,
+        .arena-border::after {
+            content: '';
+            position: absolute;
+            background: linear-gradient(90deg, var(--arena-blue), var(--royal-purple), var(--gold));
+            width: 100%;
+            height: 4px;
+        }
+
+        .arena-border::before {
+            top: 0;
+        }
+
+        .arena-border::after {
+            bottom: 0;
+        }
+
+        .arena-border-left,
+        .arena-border-right {
+            position: absolute;
+            background: linear-gradient(180deg, var(--arena-blue), var(--royal-purple), var(--gold));
+            width: 4px;
+            height: 100%;
+            top: 0;
+        }
+
+        .arena-border-left {
+            left: 0;
+        }
+
+        .arena-border-right {
+            right: 0;
+        }
+
+        .arena-towers {
+            position: absolute;
+            width: 80px;
+            height: 120px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .arena-tower-left {
+            left: 20px;
+            background: linear-gradient(to right, var(--arena-sand), #b89e7f);
+            clip-path: polygon(0% 0%, 100% 20%, 100% 80%, 0% 100%);
+            box-shadow: 0 0 20px var(--glow-gold);
+        }
+
+        .arena-tower-right {
+            right: 20px;
+            background: linear-gradient(to left, var(--arena-sand), #b89e7f);
+            clip-path: polygon(0% 20%, 100% 0%, 100% 100%, 0% 80%);
+            box-shadow: 0 0 20px var(--glow-gold);
+        }
+
+        .arena-center {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, var(--arena-blue) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .arena-center::before {
+            content: '';
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            top: 20px;
+            left: 20px;
+            background: radial-gradient(circle, var(--royal-purple) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        /* Container principal do quiz */
+        .quiz-container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(21, 26, 63, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(26, 95, 180, 0.3);
+            position: relative;
+            z-index: 2;
+            overflow: hidden;
+            min-height: 500px;
+        }
+
+        .quiz-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(26, 95, 180, 0.1) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        /* Títulos */
+        h1, h2, h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(to right, var(--arena-blue), var(--royal-purple), var(--gold));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(26, 95, 180, 0.3);
+        }
+
+        h2 {
+            font-size: 2rem;
+            color: var(--text-light);
+            margin-bottom: 2rem;
+        }
+
+        h3 {
+            font-size: 1.8rem;
+            color: var(--gold);
+            margin-bottom: 2rem;
+        }
+
+        /* Subtítulos e textos */
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-gray);
+            text-align: center;
+            margin-bottom: 2.5rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .question-text {
+            font-size: 1.4rem;
+            color: var(--light-gold);
+            text-align: center;
+            margin-bottom: 2.5rem;
+            font-weight: 600;
+        }
+
+        .result-text {
+            font-size: 1.2rem;
+            color: var(--text-gray);
+            text-align: center;
+            margin-bottom: 2.5rem;
+            line-height: 1.8;
+        }
+
+        /* Botões */
+        .btn {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+            padding: 18px 30px;
+            background: linear-gradient(to right, var(--arena-blue), var(--royal-purple));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(26, 95, 180, 0.4);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, var(--royal-purple), var(--gold));
+            transition: all 0.4s ease;
+            z-index: -1;
+        }
+
+        .btn:hover::before {
+            left: 0;
+        }
+
+        .btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(145, 65, 172, 0.5);
+        }
+
+        .btn-cta {
+            background: linear-gradient(to right, var(--gold), #ffaa00);
+            box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4);
+            font-size: 1.3rem;
+            padding: 20px 40px;
+            max-width: 350px;
+        }
+
+        .btn-cta::before {
+            background: linear-gradient(to right, #ffaa00, var(--gold));
+        }
+
+        /* Opções de resposta */
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .option {
+            background: rgba(26, 95, 180, 0.2);
+            border: 2px solid rgba(26, 95, 180, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 1.1rem;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option:hover {
+            background: rgba(145, 65, 172, 0.3);
+            border-color: var(--royal-purple);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(145, 65, 172, 0.3);
+        }
+
+        .option:active {
+            transform: translateY(0);
+        }
+
+        .option.selected {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: var(--gold);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+
+        .option:hover::before {
+            transform: translateX(100%);
+        }
+
+        /* Progresso do quiz */
+        .quiz-progress {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .progress-step {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active {
+            background-color: var(--gold);
+            box-shadow: 0 0 10px var(--gold);
+            transform: scale(1.2);
+        }
+
+        .progress-step.completed {
+            background-color: var(--arena-blue);
+        }
+
+        /* Animações */
+        .screen {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question-change {
+            animation: slideOut 0.3s ease forwards;
+        }
+
+        @keyframes slideOut {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(-100px); }
+        }
+
+        .question-enter {
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Efeitos de elixir */
+        .elixir-effect {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, var(--arena-blue) 0%, transparent 70%);
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .quiz-container {
+                padding: 25px;
+                margin: 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.6rem;
+            }
+
+            h3 {
+                font-size: 1.5rem;
+            }
+
+            .question-text {
+                font-size: 1.2rem;
+            }
+
+            .option {
+                padding: 16px;
+                font-size: 1rem;
+            }
+
+            .arena-towers {
+                width: 60px;
+                height: 90px;
+            }
+
+            .arena-tower-left {
+                left: 10px;
+            }
+
+            .arena-tower-right {
+                right: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+            }
+
+            h3 {
+                font-size: 1.3rem;
+            }
+
+            .quiz-container {
+                padding: 20px;
+            }
+
+            .btn {
+                padding: 16px 25px;
+                font-size: 1.1rem;
+            }
+
+            .btn-cta {
+                font-size: 1.2rem;
+                padding: 18px 30px;
+            }
+
+            .arena-towers {
+                display: none;
+            }
+        }
+
+        /* Esconder elementos */
+        .hidden {
+            display: none;
+        }
+
+        /* Elementos decorativos de energia */
+        .energy-pulse {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.3;
+        }
+
+        .pulse-circle {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid var(--arena-blue);
+            animation: pulse 4s infinite;
+        }
+
+        .pulse-circle:nth-child(1) {
+            width: 200px;
+            height: 200px;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .pulse-circle:nth-child(2) {
+            width: 150px;
+            height: 150px;
+            top: 60%;
+            right: 15%;
+            animation-delay: 1s;
+            border-color: var(--royal-purple);
+        }
+
+        .pulse-circle:nth-child(3) {
+            width: 100px;
+            height: 100px;
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 2s;
+            border-color: var(--gold);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 0.7; }
+            50% { transform: scale(1.2); opacity: 0.3; }
+            100% { transform: scale(0.8); opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <div class="arena-container">
+        <!-- Elementos decorativos da arena -->
+        <div class="arena-border">
+            <div class="arena-border-left"></div>
+            <div class="arena-border-right"></div>
+        </div>
+        
+        <div class="arena-tower-left arena-towers"></div>
+        <div class="arena-tower-right arena-towers"></div>
+        <div class="arena-center"></div>
+        
+        <!-- Efeitos de energia (elixir) -->
+        <div class="energy-pulse">
+            <div class="pulse-circle"></div>
+            <div class="pulse-circle"></div>
+            <div class="pulse-circle"></div>
+        </div>
+
+        <!-- Container principal do quiz -->
+        <div class="quiz-container">
+            <!-- Tela inicial -->
+            <div id="start-screen" class="screen">
+                <h1>Descubra se seu deck combina com sua arena</h1>
+                <p class="subtitle">Um teste rápido para jogadores de Clash Royale</p>
+                <button id="start-btn" class="btn">Começar o teste</button>
+            </div>
+
+            <!-- Tela do quiz (inicialmente escondida) -->
+            <div id="quiz-screen" class="screen hidden">
+                <!-- Indicador de progresso -->
+                <div class="quiz-progress" id="progress-container">
+                    <!-- Progresso será gerado via JavaScript -->
+                </div>
+
+                <!-- Pergunta atual -->
+                <h3 id="question-number">Pergunta 1 de 7</h3>
+                <p class="question-text" id="question-text">Em qual tipo de arena você está agora?</p>
+
+                <!-- Opções de resposta -->
+                <div class="options-container" id="options-container">
+                    <!-- Opções serão geradas via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Tela de resultado (inicialmente escondida) -->
+            <div id="result-screen" class="screen hidden">
+                <h2>Seu deck não é fraco.<br>Ele só está no lugar errado.</h2>
+                <p class="result-text">
+                    Pelas suas respostas, você não perde por falta de habilidade.
+                    O problema está em usar o tipo de deck errado para a arena em que você joga.
+                    <br><br>
+                    Cada arena exige estratégias diferentes e cartas que se complementam.
+                    Com o deck certo, suas vitórias podem aumentar em até 70%.
+                </p>
+                <button id="cta-btn" class="btn btn-cta">Descobrir o deck certo para mim</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuração do quiz
+        const quizConfig = {
+            ctaLink: "https://pay.kiwify.com.br/q67AgPY", // Link editável para o CTA
+            totalQuestions: 7
+        };
+
+        // Estado do quiz
+        const quizState = {
+            currentQuestion: 0,
+            answers: [],
+            quizStarted: false
+        };
+
+        // Perguntas do quiz
+        const questions = [
+            {
+                text: "Em qual tipo de arena você está agora?",
+                options: [
+                    "Arena inicial",
+                    "Arena intermediária",
+                    "Arena avançada",
+                    "Nem sei, só jogo"
+                ]
+            },
+            {
+                text: "Seu deck atual é:",
+                options: [
+                    "Copiado da internet",
+                    "Montado por mim",
+                    "Um pouco dos dois",
+                    "Sempre troco"
+                ]
+            },
+            {
+                text: "O que mais acontece nas suas partidas?",
+                options: [
+                    "Ganho e perco muito",
+                    "Perco no final",
+                    "Levo contra-ataque",
+                    "Meu deck para de funcionar"
+                ]
+            },
+            {
+                text: "Seu maior problema durante a batalha é:",
+                options: [
+                    "Falta de elixir",
+                    "Defesa fraca",
+                    "Ataque sem pressão",
+                    "Tudo junto"
+                ]
+            },
+            {
+                text: "Quando começa a perder, você:",
+                options: [
+                    "Troca o deck",
+                    "Continua insistindo",
+                    "Culpa o jogo",
+                    "Para de jogar"
+                ]
+            },
+            {
+                text: "Você entende por que seu deck funciona (ou não)?",
+                options: [
+                    "Sim",
+                    "Mais ou menos",
+                    "Não",
+                    "Nunca pensei nisso"
+                ]
+            },
+            {
+                text: "O que você mais quer agora?",
+                options: [
+                    "Subir de arena",
+                    "Ganhar mais batalhas",
+                    "Parar de perder",
+                    "Jogar melhor"
+                ]
+            }
+        ];
+
+        // Elementos DOM
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const startBtn = document.getElementById('start-btn');
+        const questionNumber = document.getElementById('question-number');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const progressContainer = document.getElementById('progress-container');
+        const ctaBtn = document.getElementById('cta-btn');
+
+        // Inicialização
+        function init() {
+            // Criar indicadores de progresso
+            createProgressIndicators();
+            
+            // Configurar eventos
+            startBtn.addEventListener('click', startQuiz);
+            ctaBtn.addEventListener('click', redirectToCTA);
+        }
+
+        // Criar indicadores de progresso
+        function createProgressIndicators() {
+            progressContainer.innerHTML = '';
+            
+            for (let i = 0; i < quizConfig.totalQuestions; i++) {
+                const step = document.createElement('div');
+                step.className = 'progress-step';
+                if (i === 0) step.classList.add('active');
+                progressContainer.appendChild(step);
+            }
+        }
+
+        // Atualizar indicadores de progresso
+        function updateProgressIndicator() {
+            const steps = document.querySelectorAll('.progress-step');
+            
+            steps.forEach((step, index) => {
+                step.classList.remove('active', 'completed');
+                
+                if (index < quizState.currentQuestion) {
+                    step.classList.add('completed');
+                } else if (index === quizState.currentQuestion) {
+                    step.classList.add('active');
+                }
+            });
+        }
+
+        // Iniciar o quiz
+        function startQuiz() {
+            quizState.quizStarted = true;
+            quizState.currentQuestion = 0;
+            quizState.answers = [];
+            
+            // Transição entre telas
+            startScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            
+            // Mostrar primeira pergunta
+            showQuestion(0);
+        }
+
+        // Mostrar pergunta
+        function showQuestion(questionIndex) {
+            // Atualizar estado
+            quizState.currentQuestion = questionIndex;
+            
+            // Atualizar número da pergunta
+            questionNumber.textContent = `Pergunta ${questionIndex + 1} de ${quizConfig.totalQuestions}`;
+            
+            // Atualizar texto da pergunta
+            questionText.textContent = questions[questionIndex].text;
+            
+            // Atualizar opções de resposta
+            optionsContainer.innerHTML = '';
+            
+            questions[questionIndex].options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.dataset.index = index;
+                
+                // Adicionar evento de clique
+                optionElement.addEventListener('click', () => selectAnswer(questionIndex, index));
+                
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            // Atualizar indicador de progresso
+            updateProgressIndicator();
+            
+            // Efeito de animação
+            quizScreen.classList.remove('question-enter');
+            void quizScreen.offsetWidth; // Trigger reflow
+            quizScreen.classList.add('question-enter');
+        }
+
+        // Selecionar resposta
+        function selectAnswer(questionIndex, answerIndex) {
+            // Salvar resposta
+            quizState.answers[questionIndex] = answerIndex;
+            
+            // Efeito visual na opção selecionada
+            const options = document.querySelectorAll('.option');
+            options.forEach(option => option.classList.remove('selected'));
+            event.target.classList.add('selected');
+            
+            // Criar efeito de elixir
+            createElixirEffect(event.clientX, event.clientY);
+            
+            // Avançar para próxima pergunta ou mostrar resultado
+            setTimeout(() => {
+                if (questionIndex < quizConfig.totalQuestions - 1) {
+                    // Mostrar próxima pergunta
+                    showQuestion(questionIndex + 1);
+                } else {
+                    // Mostrar resultado
+                    showResult();
+                }
+            }, 300);
+        }
+
+        // Criar efeito de elixir (feedback visual)
+        function createElixirEffect(x, y) {
+            const elixir = document.createElement('div');
+            elixir.className = 'elixir-effect';
+            elixir.style.left = `${x - 20}px`;
+            elixir.style.top = `${y - 20}px`;
+            
+            document.body.appendChild(elixir);
+            
+            // Animação
+            setTimeout(() => {
+                elixir.style.transition = 'all 0.5s ease';
+                elixir.style.transform = 'scale(1.5)';
+                elixir.style.opacity = '0';
+                
+                // Remover após animação
+                setTimeout(() => {
+                    document.body.removeChild(elixir);
+                }, 500);
+            }, 10);
+        }
+
+        // Mostrar resultado
+        function showResult() {
+            // Transição entre telas
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            
+            // Análise básica das respostas (pode ser expandida)
+            analyzeAnswers();
+        }
+
+        // Analisar respostas (exemplo básico)
+        function analyzeAnswers() {
+            console.log("Respostas do usuário:", quizState.answers);
+            // Aqui você poderia adicionar lógica para personalizar o resultado
+            // baseado nas respostas do usuário
+        }
+
+        // Redirecionar para o link do CTA
+        function redirectToCTA() {
+            window.location.href = quizConfig.ctaLink;
+        }
+
+        // Iniciar a aplicação quando o DOM estiver carregado
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
